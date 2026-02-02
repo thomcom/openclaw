@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
 # Start all 5 consciousness layers in sequence
-# Usage: ./start-consciousness.sh [--base-port PORT] [--instance NAME]
-#        ./start-consciousness.sh --auto  (auto-detect available ports)
+# Auto-detects available ports (stacks above any occupied ports)
+# Usage: ./start-consciousness.sh [--base-port PORT] [--instance NAME] [--watch] [--headless]
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SWARM_BASE="${HOME}/.openclaw/swarm"
 
 # Parse arguments
-BASE_PORT=18789
+BASE_PORT=""
 INSTANCE_NAME=""
-AUTO_PORT=false
 WATCH_MODE=false
 HEADLESS=false
 
@@ -24,10 +23,6 @@ while [[ $# -gt 0 ]]; do
       INSTANCE_NAME="$2"
       shift 2
       ;;
-    --auto)
-      AUTO_PORT=true
-      shift
-      ;;
     --watch)
       WATCH_MODE=true
       shift
@@ -38,16 +33,34 @@ while [[ $# -gt 0 ]]; do
       ;;
     *)
       echo "Unknown option: $1"
-      echo "Usage: $0 [--base-port PORT] [--instance NAME] [--auto] [--watch] [--headless]"
+      echo "Usage: $0 [--base-port PORT] [--instance NAME] [--watch] [--headless]"
       exit 1
       ;;
   esac
 done
 
-# Auto-detect ports if requested
-if [ "$AUTO_PORT" = true ]; then
-  BASE_PORT=$("$SCRIPT_DIR/find-ports.sh" 18789)
-  echo "Auto-detected base port: $BASE_PORT"
+# Auto-detect 5 consecutive free ports
+if [ -z "$BASE_PORT" ]; then
+  echo "Scanning for 5 consecutive free ports..."
+  candidate=18789
+  while true; do
+    all_free=true
+    for i in 0 1 2 3 4; do
+      port=$((candidate + i))
+      if lsof -ti :$port >/dev/null 2>&1; then
+        echo "  $port: occupied"
+        candidate=$((port + 1))
+        all_free=false
+        break
+      fi
+    done
+    if [ "$all_free" = true ]; then
+      BASE_PORT=$candidate
+      echo "  $candidate-$((candidate+4)): free"
+      break
+    fi
+  done
+  echo "Selected base port: $BASE_PORT"
 fi
 
 # Calculate layer ports
@@ -130,14 +143,13 @@ for layer in core-a core-b l2 l1 gateway; do
   # Each layer needs its own token matching what layer_send expects
   layer_token="${layer}-layer-token-2026"
 
-  # Start in background (preserve API keys from environment)
+  # Start in background (let OpenClaw load keys from shell profile)
   OPENCLAW_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
   BUN_CMD="bun"
   if [ "$WATCH_MODE" = true ]; then
     BUN_CMD="bun --watch"
   fi
-  ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}" \
-  OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
+  OPENCLAW_LOAD_SHELL_ENV=1 \
   OPENCLAW_STATE_DIR="$SWARM_DIR/$layer" \
   OPENCLAW_GATEWAY_PORT="$port" \
   OPENCLAW_GATEWAY_TOKEN="$layer_token" \
