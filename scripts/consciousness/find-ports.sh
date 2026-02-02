@@ -30,7 +30,7 @@ while [ $port -lt $MAX_PORT ]; do
     echo $port
     exit 0
   fi
-  port=$((port + 5))  # Skip in groups of 5 for efficiency
+  port=$((port + 1))  # Slide by 1 to find first available block
 done
 
 echo "No 5 consecutive ports available starting from $START_PORT" >&2

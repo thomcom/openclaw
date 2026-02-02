@@ -12,6 +12,7 @@ BASE_PORT=18789
 INSTANCE_NAME=""
 AUTO_PORT=false
 WATCH_MODE=false
+HEADLESS=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -31,9 +32,13 @@ while [[ $# -gt 0 ]]; do
       WATCH_MODE=true
       shift
       ;;
+    --headless)
+      HEADLESS=true
+      shift
+      ;;
     *)
       echo "Unknown option: $1"
-      echo "Usage: $0 [--base-port PORT] [--instance NAME] [--auto] [--watch]"
+      echo "Usage: $0 [--base-port PORT] [--instance NAME] [--auto] [--watch] [--headless]"
       exit 1
       ;;
   esac

@@ -9,12 +9,21 @@ See: .planning/PROJECT.md (updated 2026-02-01)
 
 ## Current Status
 
-AgentiConsciousness is operational with all 5 layers running:
-- gateway (18789): External interface
-- l1 (18790): Context buffer with identity injection
-- l2 (18791): Pattern matcher
-- core-a (18792): Primary identity anchor
-- core-b (18793): Backup identity anchor
+AgentiSelf runs 5 layers starting from an available base port:
+- gateway: conscious mind / frontal lobe
+- L1: cerebral cortex / context buffer with identity injection
+- L2: pattern matcher
+- core-a: primary identity anchor
+- core-b: backup identity anchor
+
+**Usage:**
+```bash
+# Auto-find available ports (stacks above any occupied ports)
+./scripts/consciousness/start-consciousness.sh --auto
+
+# Explicit base port
+./scripts/consciousness/start-consciousness.sh --base-port 18790
+```
 
 ## Phase 5 Deliverables (Complete)
 
@@ -85,7 +94,7 @@ AgentiConsciousness is operational with all 5 layers running:
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
-| 001 | Consciousness interaction mode and multi-instance support | 2026-02-01 | pending | [001-consciousness-interaction](./quick/001-consciousness-interaction/) |
+| 001 | Consciousness interaction mode and multi-instance support | 2026-02-01 | 625ee40 | [001-consciousness-interaction](./quick/001-consciousness-interaction/) |
 
 ## Recent Activity
 
