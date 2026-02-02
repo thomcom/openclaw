@@ -187,7 +187,8 @@ export class GatewayClient {
     const storedToken = this.opts.deviceIdentity
       ? loadDeviceAuthToken({ deviceId: this.opts.deviceIdentity.deviceId, role })?.token
       : null;
-    const authToken = storedToken ?? this.opts.token ?? undefined;
+    // Explicit token takes precedence over stored device token (needed for layer_send)
+    const authToken = this.opts.token ?? storedToken ?? undefined;
     const canFallbackToShared = Boolean(storedToken && this.opts.token);
     const auth =
       authToken || this.opts.password

@@ -11,6 +11,7 @@ SWARM_BASE="${HOME}/.openclaw/swarm"
 BASE_PORT=18789
 INSTANCE_NAME=""
 AUTO_PORT=false
+WATCH_MODE=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -26,9 +27,13 @@ while [[ $# -gt 0 ]]; do
       AUTO_PORT=true
       shift
       ;;
+    --watch)
+      WATCH_MODE=true
+      shift
+      ;;
     *)
       echo "Unknown option: $1"
-      echo "Usage: $0 [--base-port PORT] [--instance NAME] [--auto]"
+      echo "Usage: $0 [--base-port PORT] [--instance NAME] [--auto] [--watch]"
       exit 1
       ;;
   esac
@@ -117,14 +122,22 @@ for layer in core-a core-b l2 l1 gateway; do
 
   echo "Starting $layer on port $port..."
 
-  # Set environment for this layer
-  export OPENCLAW_STATE_DIR="$SWARM_DIR/$layer"
-  export OPENCLAW_GATEWAY_PORT="$port"
-  export OPENCLAW_LAYER="$layer"
+  # Each layer needs its own token matching what layer_send expects
+  layer_token="${layer}-layer-token-2026"
 
-  # Start in background
+  # Start in background (preserve API keys from environment)
   OPENCLAW_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-  nohup bun "$OPENCLAW_DIR/src/index.ts" gateway run \
+  BUN_CMD="bun"
+  if [ "$WATCH_MODE" = true ]; then
+    BUN_CMD="bun --watch"
+  fi
+  ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}" \
+  OPENAI_API_KEY="${OPENAI_API_KEY:-}" \
+  OPENCLAW_STATE_DIR="$SWARM_DIR/$layer" \
+  OPENCLAW_GATEWAY_PORT="$port" \
+  OPENCLAW_GATEWAY_TOKEN="$layer_token" \
+  OPENCLAW_LAYER="$layer" \
+  nohup $BUN_CMD "$OPENCLAW_DIR/src/index.ts" gateway run \
     --port "$port" \
     --bind loopback \
     --force \
